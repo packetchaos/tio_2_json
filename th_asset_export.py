@@ -10,6 +10,8 @@ q = Queue()
 
 tag_id = 0
 
+time.ctime()
+current_time = time.strftime('%b_%d_%Y')
 
 def worker():
     # The worker thread pulls an item from the queue and processes it
@@ -20,7 +22,8 @@ def worker():
 
 
 def parse_data(chunk_data):
-    with open('asset_data.json', 'w') as json_file:
+    global current_time
+    with open('asset_data_{}.json'.format(current_time), 'a') as json_file:
         json.dump(chunk_data, json_file)
         json_file.close()
 
@@ -35,7 +38,7 @@ def asset_export(days, ex_uuid, threads):
     day = 86400
     new_limit = day * int(days)
     day_limit = time.time() - new_limit
-    pay_load = {"chunk_size": 1000, "filters": {"last_assessed": int(day_limit)}}
+    pay_load = {"chunk_size": 500, "filters": {"last_assessed": int(day_limit)}}
     try:
 
         if ex_uuid == '0':

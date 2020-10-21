@@ -5,7 +5,7 @@ from json import JSONDecodeError
 def grab_headers():
     access_key = ''
     secret_key = ''
-    return {'Content-type': 'application/json', 'user-agent': 'navi-azure', 'X-ApiKeys': 'accessKey=' + access_key + ';secretKey=' + secret_key}
+    return {'Content-type': 'application/json', 'user-agent': 'navi-raw-json-download', 'X-ApiKeys': 'accessKey=' + access_key + ';secretKey=' + secret_key}
 
 
 def request_data(method, url_mod, **kwargs):

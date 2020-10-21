@@ -8,19 +8,20 @@ lock = threading.Lock()
 
 q = Queue()
 
+time.ctime()
+current_time = time.strftime('%b_%d_%Y')
+
 def worker():
     # The worker thread pulls an item from the queue and processes it
     while True:
         item = q.get()
-        chunk_num = item[58:]
-        # parse_data(request_data('GET', item))
-        data = request_data('GET', item)
-        parse_data(data, chunk_num)
+        parse_data(request_data('GET', item))
         q.task_done()
 
 
-def parse_data(chunk_data, chunk_number):
-    with open('vuln_data.json', 'w') as json_file:
+def parse_data(chunk_data):
+    global current_time
+    with open('vuln_data_{}.json'.format(current_time), 'a') as json_file:
         json.dump(chunk_data, json_file)
 
         json_file.close()
