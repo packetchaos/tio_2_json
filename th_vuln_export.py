@@ -1,33 +1,12 @@
 import time
-import threading
 import json
-from queue import Queue
 from api_wrapper import request_data
-
-lock = threading.Lock()
-
-q = Queue()
 
 time.ctime()
 current_time = time.strftime('%b_%d_%Y')
 
-def worker():
-    # The worker thread pulls an item from the queue and processes it
-    while True:
-        item = q.get()
-        parse_data(request_data('GET', item))
-        q.task_done()
 
-
-def parse_data(chunk_data):
-    global current_time
-    with open('vuln_data_{}.json'.format(current_time), 'a') as json_file:
-        json.dump(chunk_data, json_file)
-
-        json_file.close()
-
-
-def vuln_export(days, ex_uuid, threads):
+def vuln_export(days):
     start = time.time()
     # Set URLS for threading
     urls = []
@@ -38,20 +17,15 @@ def vuln_export(days, ex_uuid, threads):
     day_limit = time.time() - new_limit
     pay_load = {"num_assets": 500, "filters": {"last_found": int(day_limit)}}
     try:
+        # request an export of the data
+        export = request_data('POST', '/vulns/export', payload=pay_load)
 
-        if ex_uuid == '0':
-            # request an export of the data
-            export = request_data('POST', '/vulns/export', payload=pay_load)
+        # grab the export UUID
+        ex_uuid = export['export_uuid']
+        print('\nRequesting Vulnerability Export with ID : {}'.format(ex_uuid))
 
-            # grab the export UUID
-            ex_uuid = export['export_uuid']
-            print('\nRequesting Vulnerability Export with ID : {}'.format(ex_uuid))
-
-            # set a variable to True for our While loop
-            not_ready = True
-        else:
-            print("\nUsing your Export UUID\n")
-            not_ready = True
+        # set a variable to True for our While loop
+        not_ready = True
 
         # now check the status
         status = request_data('GET', '/vulns/export/' + ex_uuid + '/status')
@@ -84,17 +58,12 @@ def vuln_export(days, ex_uuid, threads):
 
         # grab all of the chunks and craft the URLS for threading
         for y in status['chunks_available']:
-            urls.append('/vulns/export/' + ex_uuid + '/chunks/' + str(y))
+            chunk_data = request_data('GET', '/vulns/export/{}/chunks/{}'.format(ex_uuid, str(y)))
 
-        for i in range(threads):
-            t = threading.Thread(target=worker)
-            t.daemon = True  # thread dies when main thread (only non-daemon thread) exits.
-            t.start()
+            with open('vuln_data_{}_chunk_{}.json'.format(current_time, y), 'a') as json_file:
+                json.dump(chunk_data, json_file)
+                json_file.close()
 
-        for item in range(len(urls)):
-            q.put(urls[item])
-
-        q.join()
         end = time.time()
         print("Vulnerability Update Time took : {}\n".format(str(end - start)))
 
