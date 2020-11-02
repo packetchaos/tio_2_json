@@ -15,7 +15,8 @@ def vuln_export(days):
     day = 86400
     new_limit = day * int(days)
     day_limit = time.time() - new_limit
-    pay_load = {"num_assets": 500, "filters": {"last_found": int(day_limit)}}
+    pay_load = {"num_assets": 500, "filters": {"last_found": int(day_limit), "state": ["fixed", "open", "reopened"],
+                                               "severity": ["critical", "high", "medium", "low"]}}
     try:
         # request an export of the data
         export = request_data('POST', '/vulns/export', payload=pay_load)
